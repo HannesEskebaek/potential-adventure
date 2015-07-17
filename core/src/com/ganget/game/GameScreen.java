@@ -1,10 +1,14 @@
 package com.ganget.game;
 
 
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
+
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -26,9 +30,12 @@ public class GameScreen implements Screen {
 	private final int VELOCITY_ITERATIONS = 6;
 	private final int POSITION_ITERATIONS = 2;
 
-	// shapes
-	private CircleShape ball;
-	private PolygonShape groundBox;
+	// bodies
+	Body ballBody;
+	Body groundBody;
+	
+	// textures
+	private Texture ballTexture;
 
 	public GameScreen(final GangetGame game) {
 		this.game = game;
@@ -45,21 +52,23 @@ public class GameScreen implements Screen {
 		BodyDef groundBodyDef = new BodyDef();
 		groundBodyDef.position.set(new Vector2(0, 10));
 
-		Body groundBody = game.world.createBody(groundBodyDef);
+		groundBody = game.world.createBody(groundBodyDef);
 
-		groundBox = new PolygonShape();	
+		PolygonShape groundBox = new PolygonShape();	
 		groundBox.setAsBox(camera.viewportWidth, 10.0f);
 		
 		groundBody.createFixture(groundBox, 0.0f);
 
 		// Ball
-		BodyDef bodyDef = new BodyDef();
-		bodyDef.type = BodyType.DynamicBody;
-		bodyDef.position.set(100, 300);
+		ballTexture = new Texture(Gdx.files.internal("ball.png"));
+		
+		BodyDef ballBodyDef = new BodyDef();
+		ballBodyDef.type = BodyType.DynamicBody;
+		ballBodyDef.position.set(100, 300);
 
-		Body body = game.world.createBody(bodyDef);
+		ballBody = game.world.createBody(ballBodyDef);
 
-		ball = new CircleShape();
+		CircleShape ball = new CircleShape();
 		ball.setRadius(6f);
 
 		FixtureDef fixtureDef = new FixtureDef();
@@ -68,7 +77,7 @@ public class GameScreen implements Screen {
 		fixtureDef.friction = 0.4f;
 		fixtureDef.restitution = 0.6f;
 
-		Fixture fixture = body.createFixture(fixtureDef);
+		Fixture fixture = ballBody.createFixture(fixtureDef);
 	}
 
 	@Override
@@ -94,11 +103,13 @@ public class GameScreen implements Screen {
 		// coordinate system specified by the camera.
 		game.batch.setProjectionMatrix(camera.combined);
 
+		System.out.println("Position: (x: " + ballBody.getPosition().x + ", y: " + ballBody.getPosition().y + ")\nSize: (width: " + 12 + ", height: " + 12 +")");
+		
 		// begin a new batch and draw the bucket and
 		// all drops
-		// game.batch.begin();
-
-		// game.batch.end();
+		game.batch.begin();
+		game.batch.draw(ballTexture, ballBody.getPosition().x, ballBody.getPosition().y, 12, 12, 0, 0, ballTexture.getWidth(), ballTexture.getHeight(), false, false);
+		game.batch.end();
 
 		// process user input
 		// if (Gdx.input.isTouched()) {
@@ -138,8 +149,8 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void dispose() {
-		ball.dispose();
-		groundBox.dispose();
+//		ballBody.dispose();
+//		groundBody.dispose();
 	}
 
 	private void doPhysicsStep(float deltaTime) {
